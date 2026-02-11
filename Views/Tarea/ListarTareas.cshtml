@@ -1,0 +1,195 @@
+@model List<Kanban.ViewModels.TareaViewModel>
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+@{
+    ViewData["Title"] = "Lista de tareas";
+    int idTablero = Convert.ToInt32(TempData["IdTablero"]); //necesario para crear una tarea nueva
+
+    var isAuthenticated = false;
+    var idUsuarioLogueado = string.Empty;
+    var rolUsuarioLogueado = string.Empty;
+
+    if (HttpContextAccessor.HttpContext.Session.GetString("IsAuthenticated") == "true")
+    {
+        isAuthenticated = true;
+        idUsuarioLogueado = HttpContextAccessor.HttpContext.Session.GetString("IdUsuarioLogueado");
+        rolUsuarioLogueado = HttpContextAccessor.HttpContext.Session.GetString("RolUsuarioLogueado");
+    }
+}
+
+<div class=" col-lg-9">
+    <table class="w-100"><caption>@ViewData["Title"]</caption></table>
+    <div class="d-flex w-100">
+            <div class="text-center d-block w-50 p-1 fs-4 fw-normal border">IDEAS</div>
+            <div class="text-center d-block w-50 p-1 fs-4 fw-normal border">TO DO</div>
+            <div class="text-center d-block w-50 p-1 fs-4 fw-normal border">DOING</div>
+            <div class="text-center d-block w-50 p-1 fs-4 fw-normal border">REVIEW</div>
+            <div class="text-center d-block w-50 p-1 fs-4 fw-normal border">DONE</div>
+    </div>
+    <div class="d-flex w-100">
+            @foreach (var estadoEnLista in Html.GetEnumSelectList<EstadoTarea>())
+            {
+                EstadoTarea estado = (EstadoTarea)Enum.Parse(typeof(EstadoTarea), estadoEnLista.Value);
+                <div class="d-block w-50 border p-1 overflow-hidden">
+                    @foreach (var tarea in Model.Where(t => (EstadoTarea)t.Estado == estado))
+                    {
+                        <div class="card mb-3 shadow-sm tarea-card" style="background-color: @tarea.Color;">
+                            <div class="card-body p-0 p-md-2 p-sm-1">
+                                
+                                <a class="btn w-100 text-uppercase text-center text-truncate nombre-tarea" href="#" id="toggleOpciones_@tarea.Id">@tarea.Nombre</a>
+                                
+                                <div id="opciones_@tarea.Id" class="opciones mt-2">
+                                    <div class="d-flex flex-column gap-2">
+                                         <!--   -->
+                                        @if(tarea.IdUsuarioAsignado == null){
+                                            <button class="btn descripcion-btn boton-info" data-bs-toggle="modal" data-bs-target="#descripcionModal" data-descripcion="@tarea.Descripcion" data-usuario-asignado="Aún no tiene un usuario asignado." data-nombre-tarea="@tarea.Nombre">Información</button>
+                                        } else{
+                                            <button class="btn descripcion-btn boton-info" data-bs-toggle="modal" data-bs-target="#descripcionModal" data-descripcion="@tarea.Descripcion" data-usuario-asignado="@tarea.NombreDeUsuario" data-nombre-tarea="@tarea.Nombre">Información</button>
+                                        }
+                                        <!--   -->
+                                        
+                                        @if (rolUsuarioLogueado == "Administrador" || Convert.ToInt32(idUsuarioLogueado) == tarea.IdUsuarioPropietarioDelTablero || Convert.ToInt32(idUsuarioLogueado) == tarea.IdUsuarioAsignado)
+                                        {
+                                            <a class="btn w-100 boton-modificar" asp-controller="Tarea" asp-action="ModificarTarea"
+                                                asp-route-idTarea="@tarea.Id">Modificar</a>
+                                        }
+                                        @if (rolUsuarioLogueado == "Administrador" || Convert.ToInt32(idUsuarioLogueado) == tarea.IdUsuarioPropietarioDelTablero)
+                                        {
+                                            <button class="btn boton-eliminar" data-bs-toggle="modal" data-bs-target="#eliminarModal"
+                                                data-id="@tarea.Id">Eliminar</button>
+                                        }
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+    </div>
+
+    <div class="d-flex flex-row justify-content-end w-100">
+        <a class="d-block btn btn-primary mt-3 boton-submit" asp-controller="Tarea" asp-action="CrearTarea" asp-route-idTablero="@idTablero">Crear tarea</a>
+
+    </div>
+</div>
+
+<!-- MODALS Y SCRIPTS para LA CONFIRMACIÓN Y MENSAJE DE ÉXITO O ERROR DE LA ELIMINACIÓN -->
+
+<!-- Modal de confirmación para eliminar -->
+<div class="modal fade" id="eliminarModal" tabindex="-1" aria-labelledby="eliminarModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="eliminarModalLabel">Confirmar eliminación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                ¿Estás seguro de que deseas eliminar esta tarea?
+            </div>
+            <div class="modal-footer">
+
+                <form id="formEliminar" method="post" asp-controller="Tarea" asp-action="EliminarTarea"
+                    style="display:inline-block;">
+                    <input type="hidden" name="idTarea" id="idTarea" />
+                    <button type="submit" class="btn boton-eliminar">Eliminar</button>
+                </form>
+
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    var eliminarModal = document.getElementById('eliminarModal');
+    eliminarModal.addEventListener('show.bs.modal', function (event) {
+        var button = event.relatedTarget;
+        var idTarea = button.getAttribute('data-id');
+        var form = document.getElementById('formEliminar');
+        var inputId = document.getElementById('idTarea');
+        inputId.value = idTarea;
+    });
+</script>
+
+
+@if (TempData["MensajeEliminacion"] != null)
+{
+    var tipoMensaje = TempData["TipoEliminacion"].ToString();
+    var mensaje = TempData["MensajeEliminacion"].ToString();
+
+    <div class="modal fade" id="eliminarMensajeModal" tabindex="-1" aria-labelledby="eliminarMensajeModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="eliminarMensajeModalLabel">@((tipoMensaje == "exitosa") ? "Éxito" : "Error")
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    @mensaje
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var modal = new bootstrap.Modal(document.getElementById("eliminarMensajeModal"));
+            modal.show();
+        });
+    </script>
+}
+
+
+<!-- SCRIPTS PARA MOSTRAR Y OCULTAR OPCIONES Y DESCRIPCIÓN DE LAS TAREAS -->
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        document.querySelectorAll("[id^='toggleOpciones_']").forEach(function (boton) {
+            boton.addEventListener("click", function (event) {
+                event.preventDefault();
+                var id = this.id.replace("toggleOpciones_", "opciones_"); // Cambia el prefijo
+                var opciones = document.getElementById(id);
+                opciones.style.display = opciones.style.display === "block" ? "none" : "block";
+            });
+        });
+    });
+</script>
+
+<!--   -->
+<div class="modal fade" id="descripcionModal" tabindex="-1" aria-labelledby="descripcionModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content p-1">
+            <div class="modal-header">
+                <h5 class="modal-title w-100 text-uppercase" id="descripcionModalLabel"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body usuario"></div>
+            <div class="modal-body descripcion"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        let botonesDescripcion = document.querySelectorAll(".descripcion-btn");
+        botonesDescripcion.forEach(boton => {
+            boton.addEventListener("click", function () {
+                let nombreTarea = this.getAttribute("data-nombre-tarea");    
+                let descripcion = this.getAttribute("data-descripcion");    
+                let usuarioAsignado = this.getAttribute("data-usuario-asignado");    
+                document.querySelector("#descripcionModal .modal-title").innerHTML = nombreTarea;
+                document.querySelector("#descripcionModal .usuario").innerHTML = "<h5>Tarea asignada al usuario</h5>" + usuarioAsignado;
+                document.querySelector("#descripcionModal .descripcion").innerHTML = "<h5>Descripción</h5>" + descripcion;
+            });
+        });
+    });
+</script>
+ <!--   -->

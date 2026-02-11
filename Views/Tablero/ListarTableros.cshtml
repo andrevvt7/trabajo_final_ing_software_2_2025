@@ -1,0 +1,167 @@
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+@model List<Kanban.ViewModels.TableroViewModel>
+
+@{
+    ViewData["Title"] = "Lista de tableros";
+    int idTablero = Convert.ToInt32(TempData["IdTablero"]);
+
+    var isAuthenticated = false;
+    var idUsuarioLogueado = string.Empty;
+    var rolUsuarioLogueado = string.Empty;
+
+    if (HttpContextAccessor.HttpContext.Session.GetString("IsAuthenticated") == "true")
+    {
+        isAuthenticated = true;
+        idUsuarioLogueado = HttpContextAccessor.HttpContext.Session.GetString("IdUsuarioLogueado");
+        rolUsuarioLogueado = HttpContextAccessor.HttpContext.Session.GetString("RolUsuarioLogueado");
+    }
+}
+
+
+<div class="col-md-12 col-lg-8">
+<table class="table table-default table-hover table-bordered">
+    <caption>@ViewData["Title"]</caption>
+    <thead>
+        <tr>
+            <th>Nombre</th>
+            <th>Propietario</th>
+            <th>Descripción</th>
+            <th class="text-center">Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var tablero in Model)
+        {
+            <tr>
+                <td>@tablero.Nombre</td>
+                <td>@tablero.NombreUsuarioPropietario</td>
+                <td>@tablero.Descripcion</td>
+                <td>
+                <div class="d-flex flex-row justify-content-center flex-wrap">
+
+                    @if (rolUsuarioLogueado == "Administrador" || Convert.ToInt32(idUsuarioLogueado) == tablero.IdUsuarioPropietario)
+                    {
+                        <a class="block m-1 p-2 btn boton-info" asp-controller="Tarea" asp-action="ListarTareas"
+                            asp-route-idTablero="@tablero.Id">Listar tareas</a>
+                        <a class="block m-1 p-2 btn boton-modificar" asp-controller="Tablero" asp-action="ModificarTablero"
+                            asp-route-idTablero="@tablero.Id">Modificar</a>
+                        <button class="block m-1 p-2 btn boton-eliminar" data-bs-toggle="modal" data-bs-target="#eliminarModal"
+                            data-id="@tablero.Id">Eliminar</button>
+                    }
+                    else
+                    {
+                            <a class="block m-1 p-2 btn boton-info" asp-controller="Tarea" asp-action="ListarTareas"
+                                asp-route-idTablero="@tablero.Id">Listar tareas</a>
+                    }
+                </div>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+    <div class="d-flex flex-row justify-content-end w-100">
+        <a class="btn btn-primary d-block boton-submit" asp-area="" asp-controller="Tablero" asp-action="CrearTablero">Crear tablero</a>
+    </div>
+</div>
+
+<!-- Modal de confirmación para eliminar -->
+<div class="modal fade" id="eliminarModal" tabindex="-1" aria-labelledby="eliminarModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="eliminarModalLabel">Confirmar eliminación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                ¿Estás seguro de que deseas eliminar este tablero?
+            </div>
+            <div class="modal-footer">
+
+                <!-- Formulario para eliminar el tablero -->
+                <form id="formEliminar" method="post" asp-controller="Tablero" asp-action="EliminarTablero"
+                    style="display:inline-block;">
+                    <input type="hidden" name="idTablero" id="idTablero" />
+                    <button type="submit" class="btn boton-eliminar">Eliminar</button>
+                </form>
+
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Llenar el ID del tablero en el formulario cuando el modal se activa
+    var eliminarModal = document.getElementById('eliminarModal');
+    eliminarModal.addEventListener('show.bs.modal', function (event) {
+        var button = event.relatedTarget; // Botón que activó el modal
+        var idTablero = button.getAttribute('data-id'); // Obtener el ID del tablero
+        var form = document.getElementById('formEliminar');
+        var inputId = document.getElementById('idTablero');
+        inputId.value = idTablero; // Asignar el ID al campo oculto del formulario
+    });
+</script>
+
+
+@if (TempData["MensajeEliminacion"] != null)
+{
+    var tipoMensaje = TempData["TipoEliminacion"].ToString();
+    var mensaje = TempData["MensajeEliminacion"].ToString();
+
+    <div class="modal fade" id="eliminarMensajeModal" tabindex="-1" aria-labelledby="eliminarMensajeModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="eliminarMensajeModalLabel">@((tipoMensaje == "exitosa") ? "Éxito" : "Error")
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    @mensaje
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var modal = new bootstrap.Modal(document.getElementById("eliminarMensajeModal"));
+            modal.show();
+        });
+    </script>
+}
+
+@if (TempData["MensajeListaTareasVacia"] != null)
+{
+    <div class="modal fade" id="tableroVacio" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="exampleModalLabel">Tablero sin tareas</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    @TempData["MensajeListaTareasVacia"]
+                </div>
+                <div class="modal-footer">
+                    <a class="btn btn-primary boton-submit" asp-controller="Tarea" asp-action="CrearTarea"
+                        asp-route-idTablero="@idTablero">Agregar tarea</a>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var modal = new bootstrap.Modal(document.getElementById("tableroVacio"));
+            modal.show();
+
+            fetch('/Tarea/LimpiarMensajeListaVacia', { method: 'POST' });
+        });
+    </script>
+}
