@@ -1,5 +1,5 @@
-# Trabajo Final Ing Software 2
-##  Contenerizacion de una Aplicación Web MVC en .NET utilizando Docker
+# Trabajo Final de Ingeniería de Software 2
+##  Contenerizacion de una Aplicación Web MVC en .NET utilizando Docker desde Github Codespaces
 La contenerización es una técnica de despliegue de software que permite empaquetar una aplicación junto con todas sus dependencias en una unidad ejecutable aislada llamada contenedor. Actualmente, esta técnica constituye una práctica estándar en ingenieria de software para asegurar portabilidad, reproductibilidad y consistencia entre entornos.
 
 En el desarrollo de aplicaciones web bajo el patrón MVC, la contenerizacion permite:
@@ -30,3 +30,51 @@ La contenerización con Docker se basa en un ecosistema de componentes intercone
 
 ### Uso de Codespaces y beneficio respecto a Docker
 En el contexto del desarrollo en la nube, GitHub Codespaces simplifica el uso de Docker, ya que el entorno de ejecución ya incluye Docker Engine preinstalado y configurado. Esto elimina la necesidad de instalar Docker localmente, permitiendo construir imágenes y ejecutar contenedores directamente en una máquina virtual remota.
+
+## Desarrollo práctico
+### Pasos previos
+Lo primero que tenemos que tener listo es el repositorio de nuestro proyecto en Github y nuestro espacio en Codespaces. Para ello puede descargar el archivo .zip de este repositorio utilizando la opción Code → Download ZIP. Una vez descargado, descomprima el contenido y cree un nuevo repositorio propio, cargando allí los archivos obtenidos. Luego elimine los archivos "Dockerfile" y "docker-compose.yml" para empezar de cero con Docker.
+
+### Dockerfile
+Una vez que tenemos el repositorio y el codespace, **creamos un archivo con el nombre "Dockerfile"** en la carpeta principal del proyecto.
+Un Dockerfile es un documento de texto que se utiliza para crear una imagen de contenedor. Proporciona instrucciones al generador de imágenes sobre los comandos a ejecutar, los archivos a copiar, el comando de inicio y más. Cada una de estas instrucciones genera una capa nueva en la imagen.
+Más adelante se explica el uso de multi-stage builds en el Dockerfile.
+
+##### Contenido del Dockerfile. Copie las siguientes instrucciones en el archivo:
+```C#
+#Primera etapa: usamos una imagen oficial de .NET 8 con el SDK que incluye las herramientas de compilación
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS etapa-build
+# Definimos un directorio de trabajo dentro del contenedor, donde se ejecutará lo que sigue
+WORKDIR /app
+# Copiamos todo el proyecto desde el repositorio al contenedor, desde la carpeta actual a /app
+COPY . .
+# Compilamos y preparamos la aplicación para producción. Los archivos compilados se generarán en la carpeta out
+RUN dotnet publish -c Release -o out
+
+#Segunda etapa: usamos una imagen que solo tiene el runtime
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS etapa-final
+# Se define un directorio de trabajo para esta imagen
+WORKDIR /app
+# Ahora copiamos los archcivos compilados de la etapa anterior desde la carpeta out a la actual /app
+COPY --from=etapa-build /app/out .
+# Indicamos que se usará el puerto 8080 (que luego se abrirá en docker-compose.yml)
+EXPOSE 8080
+# Por último definimos el comando que se ejecutará cuando se inicie el contenedor (sería como usar dotnet tl2-proyecto-2024-andrevvt7.dll)
+ENTRYPOINT ["dotnet", "tl2-proyecto-2024-andrevvt7.dll"]
+```
+
+##### Las instrucciones que usamos son:
+- FROM <imagen>- para especificar la imagen base para la compilación
+- WORKDIR <ruta>- donde se especifica el directorio de trabajo o la ruta en la imagen donde se copiarán los archivos y se ejecutarán los comandos.
+- COPY <ruta-local> <ruta-imagen>- para indicarle al constructor que copie archivos del host (máquina local o el entorno donde se realiza la construcción de la imagen) y los coloque en la imagen del contenedor.
+- RUN <comando>- para indicarle al constructor que ejecute el comando especificado.
+- EXPOSE <número-puerto>- para indicar un puerto que la imagen desea exponer.
+- ENTRYPOINT <comando>- para definir el comando que el contenedor siempre ejecutará por defecto.
+
+##### Multi-stage builds
+En una compilación tradicional, todas las instrucciones de compilación se ejecutan en secuencia y en un único contenedor de compilación. Todas esas capas terminan en la imagen final.
+En nuestro caso utilizamos la compilación de múltiples etapas (multi-stage builds) que permite introducir varias etapas en el Dockerfile, cada una con un propósito específico. Al separar el entorno de compilación del entorno de ejecución final, se puede reducir el tamaño de la imagen final y la superficie de ataque.
+Nuestro Dockerfile utiliza dos etapas:
+1. etapa-build: una etapa de compilación que utiliza una imagen base que contiene las herramientas necesarias para compilar la aplicación. Incluye comandos para instalar herramientas de compilación, copiar código fuente y ejecutar comandos de compilación.
+2. etapa-final: que utiliza una imagen base más pequeña para ejecutar la aplicación. Copia los artefactos compilados desde la etapa de compilación. Finalmente, se define la instrucción ENTRYPOINT para iniciar la aplicación.
+Para cada etapa usamos una declaración FROM y la palabra clave AS para asignarle el nombre a cada una. Además, la declaración COPY en la segunda etapa es COPY --from la etapa anterior.
