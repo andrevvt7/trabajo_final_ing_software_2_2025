@@ -240,32 +240,32 @@ Lo anterior significa que deberían poner el nombre del proyecto manualmente, al
    
 ## Beneficios de implementar la técnica
 La implementación de contenedores mediante Docker y el uso de entornos en la nube como GitHub Codespaces aporta múltiples beneficios tanto en el área específica del desarrollo como en otras áreas relacionadas de la ingeniería de software.
-1. **Reproducibilidad del entorno**
+1. **Reproducibilidad del entorno**  
 Permite garantizar que todos los desarrolladores trabajen bajo las mismas condiciones técnicas (versiones de dependencias, sistema operativo, configuración). Esto reduce errores asociados a diferencias de entorno.
-2. **Portabilidad**
+2. **Portabilidad**  
 Los contenedores pueden ejecutarse en cualquier infraestructura que soporte Docker, ya sea local, en servidores físicos o en la nube. Esto facilita la migración entre entornos (desarrollo, testing y producción).
-3. **Integración con prácticas DevOps**
+3. **Integración con prácticas DevOps**  
 La contenerización favorece la automatización, la integración continua y el despliegue continuo (CI/CD), alineándose con principios del movimiento DevOps. Esto mejora la eficiencia del ciclo de vida del software.
-4. **Aislamiento de aplicaciones**
+4. **Aislamiento de aplicaciones**  
 Cada contenedor funciona de manera independiente, evitando conflictos entre proyectos que utilicen diferentes versiones de librerías o tecnologías.
-5. **Escalabilidad**
+5. **Escalabilidad**  
 En entornos productivos, los contenedores pueden replicarse fácilmente para soportar mayor carga de usuarios.
-6. Reducción del tiempo de configuración
+6. **Reducción del tiempo de configuración**  
 El uso de Codespaces elimina la necesidad de instalar herramientas localmente, reduciendo tiempos de onboarding en equipos nuevos.
 
 ## Desafíos y consideraciones
 A pesar de sus ventajas, la implementación de estas tecnologías también presenta desafíos que deben ser considerados por los profesionales.
-1. **Curva de aprendizaje**
+1. **Curva de aprendizaje**  
 Docker introduce conceptos nuevos como imágenes, contenedores, volúmenes y redes. Requiere capacitación inicial para su uso correcto.
-2. **Gestión de recursos**
+2. **Gestión de recursos**  
 Los contenedores consumen CPU y memoria. En entornos limitados (como planes gratuitos de Codespaces), pueden presentarse restricciones de rendimiento.
-3. **Seguridad**
+3. **Seguridad**  
 Una mala configuración de imágenes, puertos o variables de entorno puede exponer información sensible.
-4. **Persistencia de datos**
+4. **Persistencia de datos**  
 Si no se utilizan volúmenes correctamente, los datos pueden perderse al eliminar contenedores.
-5. **Dependencia de servicios en la nube**
+5. **Dependencia de servicios en la nube**  
 El uso de Codespaces implica depender de la disponibilidad de la infraestructura de GitHub.
-6. **Complejidad en proyectos grandes**
+6. **Complejidad en proyectos grandes**  
 En arquitecturas más complejas (microservicios), la configuración puede volverse extensa y requerir herramientas adicionales como orquestadores.
 
 ## Conclusión
