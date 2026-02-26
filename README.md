@@ -184,3 +184,46 @@ Esto significa que:
 - Los cambios realizados dentro del contenedor se reflejan en el archivo local.
 
 Esto es fundamental para persistencia de datos.
+
+### Comó Ejecutar la Aplicación
+Existen al menos 3 opciones para ejecutar la aplicacion, desde la terminal de codespaces hacemos:
+#### OPCION 1 - Construir y Ejecutar
+``` bash
+docker compose up --build
+```
+**¿QUE HACE?**
+
+1. Construye la imagen (si no existe o cambió el Dockerfile).
+2. Crea los contenedores.
+3. Inicia los servicios.
+4. Muestra los logs en tiempo real.
+
+#### OPCION 2 - Modo desarrollo watch
+``` bash
+docker compose watch
+```
+**¿QUE HACE?**
+
+1. Observa cambios en el código.
+2. Reconstruye automaticamente cuando detecta modificaciones.
+3. Ideal para desarrollo activo.
+
+#### OPCION 3 - Ejecutar en segundo plano
+``` bash
+docker compose up -d
+```
+Ejecuta los contenedores en modo detached (segundo plano).
+
+**¿QUE SUCEDE INTERNAMENTE?**
+
+1.  Docker lee el `Dockerfile`.
+2. Construye una **imagen**.
+3. A partir de la imagen crea un **contenedor**.
+4. El contenedor se ejecuta dentro del servidor remoto del Codespace.
+5. GitHub expone automaticamente los puertos utilizados.
+
+- La imagen es estática.
+- El contenedor es la instancia de Ejecución.
+
+### ¿Dónde se ejecuta realmente?
+Todo se ejecuta en un servidor remoto proporcionado por GITHUB. La aplicación no corre en la computadora local, sino en la insfractructura en al nube GitHub.
