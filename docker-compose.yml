@@ -1,11 +1,11 @@
 services:
   web-app:
     build: .
-    imagee: mi-proyecto-mvc
+    image: mi-proyecto-mvc
     ports:
       - "8080:8080"
     environment:
       - ASPNETCORE_URLS=https://+:8080
-      - ASPNETCORE_ENVIRONMENT=Develoment
+      - ASPNETCORE_ENVIRONMENT=Development
     volumes:
       - ./Kanban.db:/app/Kanban.db # <-- ESTO vincula el archivo de la PC con el contenedor
