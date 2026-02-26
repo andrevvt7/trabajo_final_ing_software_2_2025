@@ -78,3 +78,109 @@ Nuestro Dockerfile utiliza dos etapas:
 1. etapa-build: una etapa de compilación que utiliza una imagen base que contiene las herramientas necesarias para compilar la aplicación. Incluye comandos para instalar herramientas de compilación, copiar código fuente y ejecutar comandos de compilación.
 2. etapa-final: que utiliza una imagen base más pequeña para ejecutar la aplicación. Copia los artefactos compilados desde la etapa de compilación. Finalmente, se define la instrucción ENTRYPOINT para iniciar la aplicación.
 Para cada etapa usamos una declaración FROM y la palabra clave AS para asignarle el nombre a cada una. Además, la declaración COPY en la segunda etapa es COPY --from la etapa anterior.
+
+### docker-compose.yml
+
+Una vez creado el Dockerfile, el siguiente paso es crear un archivo llamado docker-compose.yml en la carpeta principal del proyecto.
+
+Docker Compose es una herramienta que permite definir y ejecutar aplicaciones multicontenedor. En este caso, lo utilizamos para configurar y ejecutar nuestra aplicación ASP.NET dentro de un contenedor de manera sencilla, centralizando toda la configuración en un solo archivo.
+
+El archivo _docker-compose.yml_ define los servicios, puertos, variables de entorno y volúmenes que utilizará nuestra aplicación.
+
+### Contenido del docker-compose.yml
+
+Copie las siguientes instrucciones en el archivo:
+``` yml
+services:
+  web-app:
+    build: .
+    image: mi-proyecto-mvc
+    ports:
+      - "8080:8080"
+    environment:
+      - ASPNETCORE_URLS=http://+:8080
+      - ASPNETCORE_ENVIRONMENT=Development
+    volumes:
+      - ./Kanban.db:/app/Kanban.db 
+```
+### Explicación de cada sección
+- **<font size="3">Services</font>**: 
+La sección services define los contenedores que formarán parte de la aplicación.
+En este caso tenemos un único servicio llamado web-app, que representa nuestra aplicación ASP.NET.
+
+- **<font size="3">web-app</font>**: 
+Es el nombre del servicio. Puede ser cualquier nombre descriptivo.
+Este nombre también funcionará como identificador interno dentro de la red de Docker.
+
+- **<font size="3">build: . </font>**: 
+Indica que Docker debe construir la imagen utilizando el Dockerfile que se encuentra en el directorio actual (.).
+
+- **<font size="3">image: mi-proyecto-mvc </font>**: 
+Define el nombre que tendrá la imagen generada.
+Esto permite reutilizarla posteriormente sin necesidad de volver a construirla si no hubo cambios.
+
+- **<font size="3">ports</font>**:
+``` yml
+ ports: "8080:8080"
+```
+ Realiza el mapeo de puertos:
+
+``` yml
+ PUERTO_PC : PUERTO_CONTENEDOR
+```
+En este caso:
+
+- El puerto 8080 de la PC
+
+- Se conecta con el puerto 8080 del contenedor
+
+Esto permite acceder a la aplicación desde el navegador ingresando a:
+```
+http://localhost:8080
+```
+- **<font size="3">environment </font>**:
+Permite definir variables de entorno dentro del contenedor.
+
+environment:
+``` yml
+  - ASPNETCORE_URLS=http://+:8080
+  - ASPNETCORE_ENVIRONMENT=Development
+```
+**<font size="2">ASPNETCORE_URLS </font>**:
+Indica en qué puerto escuchará la aplicación dentro del contenedor.
+
+` http://+:8080 ` significa:
+
+- Escuchar en cualquier interfaz de red (`+`)
+
+- En el puerto 8080
+
+**<font size="2">ASPNETCORE_ENVIRONMENT </font>**:
+Define el entorno de ejecución.
+
+En este caso:
+
+**`Development`**  → habilita modo desarrollo (mensajes de error detallados, herramientas de debugging, etc.)
+
+- **<font size="3">volumes </font>**:
+```yml
+volumes:
+  - ./Kanban.db:/app/Kanban.db
+```
+
+Los volúmenes permiten vincular archivos o carpetas de la máquina host (PC) con el contenedor.
+
+En este caso:
+```
+./Kanban.db  → archivo en la PC
+/app/Kanban.db → archivo dentro del contenedor
+```
+Esto significa que:
+
+- La base de datos SQLite se guarda físicamente en la PC.
+
+- Si el contenedor se elimina, la base de datos no se pierde.
+
+- Los cambios realizados dentro del contenedor se reflejan en el archivo local.
+
+Esto es fundamental para persistencia de datos.
