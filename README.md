@@ -64,20 +64,20 @@ ENTRYPOINT ["dotnet", "tl2-proyecto-2024-andrevvt7.dll"]
 ```
 
 ##### Las instrucciones que usamos son:
-- ```dockerfile FROM <imagen>``` - para especificar la imagen base para la compilación
-- ```dockerfile WORKDIR <ruta>``` - donde se especifica el directorio de trabajo o la ruta en la imagen donde se copiarán los archivos y se ejecutarán los comandos.
-- ```dockerfile COPY <ruta-local> <ruta-imagen>``` - para indicarle al constructor que copie archivos del host (máquina local o el entorno donde se realiza la construcción de la imagen) y los coloque en la imagen del contenedor.
-- ```dockerfile RUN <comando>``` - para indicarle al constructor que ejecute el comando especificado.
-- ```dockerfile EXPOSE <número-puerto>```- para indicar un puerto que la imagen desea exponer.
-- ```dockerfile ENTRYPOINT <comando>``` - para definir el comando que el contenedor siempre ejecutará por defecto.
+- ```FROM <imagen>``` - para especificar la imagen base para la compilación
+- ```WORKDIR <ruta>``` - donde se especifica el directorio de trabajo o la ruta en la imagen donde se copiarán los archivos y se ejecutarán los comandos.
+- ```COPY <ruta-local> <ruta-imagen>``` - para indicarle al constructor que copie archivos del host (máquina local o el entorno donde se realiza la construcción de la imagen) y los coloque en la imagen del contenedor.
+- ```RUN <comando>``` - para indicarle al constructor que ejecute el comando especificado.
+- ```EXPOSE <número-puerto>```- para indicar un puerto que la imagen desea exponer.
+- ```ENTRYPOINT <comando>``` - para definir el comando que el contenedor siempre ejecutará por defecto.
 
 ##### Multi-stage builds
 En una compilación tradicional, todas las instrucciones de compilación se ejecutan en secuencia y en un único contenedor de compilación. Todas esas capas terminan en la imagen final.
 En nuestro caso utilizamos la compilación de múltiples etapas (multi-stage builds) que permite introducir varias etapas en el Dockerfile, cada una con un propósito específico. Al separar el entorno de compilación del entorno de ejecución final, se puede reducir el tamaño de la imagen final y la superficie de ataque.
 Nuestro Dockerfile utiliza dos etapas:
 1. **etapa-build**: una etapa de compilación que utiliza una imagen base que contiene las herramientas necesarias para compilar la aplicación. Incluye comandos para instalar herramientas de compilación, copiar código fuente y ejecutar comandos de compilación.
-2. **etapa-final**: que utiliza una imagen base más pequeña para ejecutar la aplicación. Copia los artefactos compilados desde la etapa de compilación. Finalmente, se define la instrucción ```dockerfile ENTRYPOINT``` para iniciar la aplicación.
-Para cada etapa usamos una declaración ```dockerfile FROM``` y la palabra clave ```dockerfile AS``` para asignarle el nombre a cada una. Además, la declaración ```dockerfile COPY``` en la segunda etapa es COPY --from la etapa anterior.
+2. **etapa-final**: que utiliza una imagen base más pequeña para ejecutar la aplicación. Copia los artefactos compilados desde la etapa de compilación. Finalmente, se define la instrucción ```ENTRYPOINT``` para iniciar la aplicación.
+Para cada etapa usamos una declaración ```FROM``` y la palabra clave ```AS``` para asignarle el nombre a cada una. Además, la declaración ```COPY``` en la segunda etapa es ```COPY --from``` la etapa anterior.
 
 ### docker-compose.yml
 
